@@ -1,4 +1,4 @@
-import React, { Suspense,useEffect,useState } from "react";
+import React, { Suspense,useEffect,useState,useRef } from "react";
 import { Canvas, useLoader } from "@react-three/fiber";
 import { OrbitControls, TransformControls, Line} from "@react-three/drei";
 import { TextureLoader } from "three/src/loaders/TextureLoader";
@@ -9,6 +9,7 @@ import "./Viewer.scss";
 
 function Scene() {
   
+  const lines = useRef
   const R = 10000
   const pointSize = R/50
   const coordGridSize = R/100
@@ -19,9 +20,20 @@ function Scene() {
     '360-2.jpg'
   ];
 
-  const [Cx,Cz,Cy] = [0,-R,0]
+  const [Cx,Cz,Cy] = [0,-R,0] //расположение камеры
 
-  const [Ax,Az,Ay] = [-8000,-R,1000]
+
+
+  function createPoint([Ax,Ay,Az]) {
+    let AxyCz = ((Ay**2)+(Ax**2))**0.5
+    let AxyC = ((R**2)+(AxyCz**2))**0.5
+    let Kxy = Math.sign(Ay) * (R*AxyCz)/AxyC
+
+    let Ky = (Ay * Kxy)/AxyCz * Math.sign(Ay)
+    let Kx = ((Kxy**2)-(Ky**2))**0.5 * Math.sign(Ax)
+    let Kz = ((R**2)-(Kxy**2))**0.5 * -1
+  }
+  const [Ax,Az,Ay] = [20000,-R,-5000]
 
 
   let AxyCz = ((Ay**2)+(Ax**2))**0.5
@@ -87,7 +99,7 @@ function Scene() {
         />
         <meshStandardMaterial
           transparent={true}
-          opacity={0.2}
+          opacity={0.5}
           depthTest={true}
           depthWrite={true}
           map={sphereImg}
@@ -96,14 +108,14 @@ function Scene() {
       </mesh>
 
       <mesh position={[0,-R,0]} rotation={[-Math.PI/2,0,0]}>
-        <circleBufferGeometry args={[100000,32]}/>
+        <circleBufferGeometry args={[R*10,32]}/>
         <meshBasicMaterial
           color={'#d3d3d3'}
           side={THREE.DoubleSide}
           />
       </mesh>
 
-      <group name="LINES">
+      <group ref={lines} name="LINES">
         <Line
             points={[[0, 0, 0],[Ax, Az, Ay]]}                                
             color="black"                  
@@ -132,19 +144,19 @@ function Scene() {
 
      <group name="COORDINAT_GRID"> 
         <mesh position={[0,0,0]}>
-          <sphereBufferGeometry args={[2,10,10]} />
+          <sphereBufferGeometry args={[pointSize,10,10]} />
           <meshBasicMaterial
             color={'white'}
           />
         </mesh>
         <mesh position={[0,-R,0]}>
-          <boxBufferGeometry args={[1,1,100000]}/>
+          <boxBufferGeometry args={[coordGridSize,1,R*20]}/>
           <meshBasicMaterial
             color={'red'}
           />
         </mesh>
         <mesh position={[0,-R,0]} rotation={[0,Math.PI/2,0]}>
-          <boxBufferGeometry args={[1,1,100000]}/>
+          <boxBufferGeometry args={[coordGridSize,1,R*20]}/>
           <meshBasicMaterial
             color={'blue'}
           />
